@@ -3,15 +3,18 @@
   "version": "0.0.1",
   "private": true,
   "scripts": {
-    "android": "react-native run-android",
-    "ios": "react-native run-ios",
+    "android": "react-native run-android --list-devices",
+    "ios": "react-native run-ios --simulator='iPhone 15'",
     "lint": "eslint .",
-    "start": "react-native start",
+    "start": "react-native start --reset-cache --experimental-debugger",
     "test": "jest"
   },
   "dependencies": {
+    "@react-native-picker/picker": "^2.7.7",
+    "axios": "^1.7.2",
     "react": "18.2.0",
-    "react-native": "0.74.2"
+    "react-native": "0.74.2",
+    "react-native-maps": "^1.15.6"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",

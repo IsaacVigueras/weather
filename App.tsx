@@ -1,117 +1,105 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- */
-
-import React from 'react';
-import type {PropsWithChildren} from 'react';
+import React, {useEffect, useState} from 'react';
 import {
-  SafeAreaView,
-  ScrollView,
-  StatusBar,
+  Alert,
+  Keyboard,
   StyleSheet,
-  Text,
-  useColorScheme,
+  TouchableWithoutFeedback,
   View,
+  ViewStyle,
 } from 'react-native';
-
-import {
-  Colors,
-  DebugInstructions,
-  Header,
-  LearnMoreLinks,
-  ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
-
-type SectionProps = PropsWithChildren<{
-  title: string;
-}>;
-
-function Section({children, title}: SectionProps): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
-  return (
-    <View style={styles.sectionContainer}>
-      <Text
-        style={[
-          styles.sectionTitle,
-          {
-            color: isDarkMode ? Colors.white : Colors.black,
-          },
-        ]}>
-        {title}
-      </Text>
-      <Text
-        style={[
-          styles.sectionDescription,
-          {
-            color: isDarkMode ? Colors.light : Colors.dark,
-          },
-        ]}>
-        {children}
-      </Text>
-    </View>
-  );
-}
+import Form from './components/Form';
+import {CountryEnum, SearchType, regionType} from './interfaces';
+import {API} from './service';
+import {WeatherResponse} from './interfaces/weather';
+import Weather from './components/Weather';
 
 function App(): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
+  const [search, setSearch] = useState<SearchType>({
+    city: '',
+    country: CountryEnum.empty,
+  });
+  const [isValid, setIsValid] = useState<boolean>(false);
+  const [region, setRegion] = useState<regionType>({
+    latitude: 37.78825,
+    longitude: -122.4324,
+    latitudeDelta: 0.0922,
+    longitudeDelta: 0.0421,
+  });
+  const [data, setData] = useState<WeatherResponse>();
+  const [bgColor, setBGColor] = useState<string>('rgb(71,149,212)');
 
-  const backgroundStyle = {
-    backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
+  useEffect(() => {
+    if (isValid) {
+      try {
+        getData();
+      } catch (error) {
+        Alert.alert('Error', 'Empty data, try another contry');
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isValid]);
+
+  const getData = async () => {
+    const response = await API(
+      'GET',
+      // `weather?lat=${region.latitude}&lon=${region.longitude}`,
+      `weather?q=${search.city},${search.country}`,
+    );
+
+    setIsValid(false);
+    setData(response);
+
+    const kelvin = 273.15;
+    const {main} = response;
+    const current = main.temp - kelvin;
+    let color: string = '';
+
+    if (current < 10) {
+      color = 'rgb(105, 108, 149)';
+    } else if (current >= 10 && current < 25) {
+      color = 'rgb(71,149,212)';
+    } else {
+      color = 'rgb(178, 28, 61)';
+    }
+
+    setBGColor(color);
+  };
+
+  const hideKeyboard = () => {
+    Keyboard.dismiss();
+  };
+
+  const bgColorApp: ViewStyle = {
+    backgroundColor: bgColor,
   };
 
   return (
-    <SafeAreaView style={backgroundStyle}>
-      <StatusBar
-        barStyle={isDarkMode ? 'light-content' : 'dark-content'}
-        backgroundColor={backgroundStyle.backgroundColor}
-      />
-      <ScrollView
-        contentInsetAdjustmentBehavior="automatic"
-        style={backgroundStyle}>
-        <Header />
-        <View
-          style={{
-            backgroundColor: isDarkMode ? Colors.black : Colors.white,
-          }}>
-          <Section title="Step One">
-            Edit <Text style={styles.highlight}>App.tsx</Text> to change this
-            screen and then come back to see your edits.
-          </Section>
-          <Section title="See Your Changes">
-            <ReloadInstructions />
-          </Section>
-          <Section title="Debug">
-            <DebugInstructions />
-          </Section>
-          <Section title="Learn More">
-            Read the docs to discover what to do next:
-          </Section>
-          <LearnMoreLinks />
+    <>
+      <TouchableWithoutFeedback onPress={() => hideKeyboard()}>
+        <View style={[styles.app, bgColorApp]}>
+          <View style={styles.container}>
+            <Weather data={data} />
+            <Form
+              region={region}
+              search={search}
+              setSearchType={setSearch}
+              setIsValid={setIsValid}
+              setRegion={setRegion}
+            />
+          </View>
         </View>
-      </ScrollView>
-    </SafeAreaView>
+      </TouchableWithoutFeedback>
+    </>
   );
 }
 
 const styles = StyleSheet.create({
-  sectionContainer: {
-    marginTop: 32,
-    paddingHorizontal: 24,
+  app: {
+    flex: 1,
+    justifyContent: 'center',
   },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: '600',
-  },
-  sectionDescription: {
-    marginTop: 8,
-    fontSize: 18,
-    fontWeight: '400',
-  },
-  highlight: {
-    fontWeight: '700',
+  container: {
+    marginHorizontal: '2.5%',
   },
 });
 
